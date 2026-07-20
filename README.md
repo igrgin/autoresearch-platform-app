@@ -27,7 +27,7 @@ The native package build for the current OS is:
 npm run prototype:package
 ```
 
-Cross-platform packaging and updater-signature generation are exercised by `.github/workflows/prototype-tauri-sidecar.yml` on macOS, Windows, and Linux. The workflow uses disposable prototype updater keys; production release jobs must share one protected offline-generated key.
+The three-platform CI recipe lives at `docs/prototype-tauri-sidecar.workflow.yml`. It has not run: the current GitHub credentials are not permitted to create workflow files. Once copied to `.github/workflows/prototype-tauri-sidecar.yml` by a maintainer with workflow permission, it packages and updater-signs on macOS, Windows, and Linux with disposable prototype keys. Production release jobs must instead share one protected offline-generated key.
 
 ## Protocol under test
 
@@ -42,7 +42,7 @@ Cross-platform packaging and updater-signature generation are exercised by `.git
 ## Deliberate limits
 
 - The Commander executable is a tiny PyInstaller-frozen protocol fixture, not application code.
-- CI updater-signs its artifacts with disposable prototype keys. Production identity signing/notarization still requires Apple and Windows credentials; production updater signing requires one offline Tauri key shared by all release jobs.
+- The macOS updater artifact is signed with a disposable prototype key. The Windows/Linux CI recipe remains unexecuted. Production identity signing/notarization still requires Apple and Windows credentials; production updater signing requires one offline Tauri key shared by all release jobs.
 - The prototype tests child supervision while Battleground is open. Whether a Research Run may outlive Battleground is a separate product decision.
 - No persistence, retry/replay, provider, SSH, Git, or Experiment behavior is implemented here.
 
