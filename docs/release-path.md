@@ -10,9 +10,9 @@ This is the release boundary proved or deliberately left credential-gated by the
 - The desktop shell, protocol version, and Commander executable share one application version and one package, so they update atomically.
 - The renderer has only core Tauri IPC. It cannot invoke the shell plugin or choose an executable or command line.
 
-## Defined but not yet proved on Windows and Linux
+## Cross-platform verification
 
-`docs/prototype-tauri-sidecar.workflow.yml` contains the host-native matrix. The repository's current automation credentials cannot create files under `.github/workflows`, so those jobs have not run. A maintainer must activate the recipe before this ticket can claim three-platform reliability.
+`.github/workflows/prototype-tauri-sidecar.yml` contains the host-native macOS, Windows, and Linux matrix. This ticket cannot claim three-platform reliability until all three jobs pass.
 
 ## Production release credentials
 
