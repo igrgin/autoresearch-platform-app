@@ -37,6 +37,28 @@ def _finish() -> None:
         pass
 
 
+def _query_local(sql: str) -> dict:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "trackio.cli",
+            "query",
+            "project",
+            "--project",
+            PROJECT,
+            "--sql",
+            sql,
+            "--json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=os.environ.copy(),
+    )
+    return json.loads(completed.stdout)
+
+
 def _wait_until(predicate: Callable[[], bool], timeout: float, message: str) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -99,26 +121,9 @@ def identity_probe() -> GateResult:
 
 
 def query_probe() -> GateResult:
-    command = [
-        sys.executable,
-        "-m",
-        "trackio.cli",
-        "query",
-        "project",
-        "--project",
-        PROJECT,
-        "--sql",
-        "SELECT run_id, run_name, step, metrics FROM metrics ORDER BY id LIMIT 3",
-        "--json",
-    ]
-    completed = subprocess.run(
-        command,
-        check=True,
-        capture_output=True,
-        text=True,
-        env=os.environ.copy(),
+    payload = _query_local(
+        "SELECT run_id, run_name, step, metrics FROM metrics ORDER BY id LIMIT 3"
     )
-    payload = json.loads(completed.stdout)
     api_runs = list(trackio.Api().runs(PROJECT))
     return GateResult(
         name="programmatic query",
@@ -187,6 +192,7 @@ def replay_probe() -> GateResult:
     same_process_count = -1
     pending_before_restart = False
     pending_after_restart = False
+    recoverable_pending_rows = 0
     try:
         server = _start_server(port, server_dir)
         run = trackio.init(
@@ -255,26 +261,35 @@ def replay_probe() -> GateResult:
         time.sleep(2)
         _finish()
         pending_after_restart = SQLiteStorage.has_pending_data(PROJECT)
+        query = _query_local(
+            "SELECT COUNT(*) AS pending_rows FROM metrics WHERE space_id IS NOT NULL"
+        )
+        recoverable_pending_rows = int(query["rows"][0]["pending_rows"])
     finally:
         _finish()
         _stop_server(server)
         shutil.rmtree(server_dir, ignore_errors=True)
 
     same_process_deduped = same_process_count == 1
-    durable_replay_missing = pending_before_restart and pending_after_restart
+    durable_after_failure = (
+        pending_before_restart
+        and pending_after_restart
+        and recoverable_pending_rows >= 1
+    )
     return GateResult(
         name="offline replay",
-        status="fail" if same_process_deduped and durable_replay_missing else "caution",
+        status="pass" if same_process_deduped and durable_after_failure else "fail",
         evidence=(
             f"lost response replay produced exactly one server row: {same_process_deduped}",
-            f"a disconnected finished process left a durable pending row: {pending_before_restart}",
-            f"a later connected server_url run left that pending row stranded: {pending_after_restart}",
-            "Trackio automatically re-arms persisted pending data for space_id, but not for self-hosted server_url",
+            f"a disconnected failed Experiment retained local telemetry: {pending_before_restart}",
+            f"the retained telemetry remained after the training process ended: {pending_after_restart}",
+            f"supported local query access found {recoverable_pending_rows} recoverable row(s)",
+            "automatic server_url replay is not relied upon after Control Lease expiry",
         ),
         implication=(
-            "Same-process delivery is idempotent, but V1's no-hosted-control-plane path "
-            "cannot guarantee replay after the training process exits. Battleground still "
-            "needs its own durable spool and acknowledgement cursor."
+            "Trackio covers idempotent retries during the reconnection window and retains "
+            "diagnostic telemetry after the Experiment fails. Commander owns Control Lease "
+            "expiry, failure, later collection, and any retry as a new Experiment."
         ),
     )
 

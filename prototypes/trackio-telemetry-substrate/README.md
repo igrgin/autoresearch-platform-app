@@ -27,12 +27,16 @@ proposed integration.
 
 ## Candidate interpretation
 
-Trackio is a credible secondary telemetry store, but it does not eliminate the
-need for Battleground's own durable transport. In 0.31.5, generated `log_id`s
-make same-process retries idempotent. A self-hosted `server_url` client also
-persists a failed batch locally when it exits, but a later connected client does
-not automatically re-arm those pending rows. The Hugging Face `space_id` path
-does re-arm them, but a hosted control plane is outside Battleground V1.
+Trackio is viable as a bounded telemetry substrate under Battleground's Control
+Lease model. In 0.31.5, generated `log_id`s make retries during the 30-second
+reconnection window idempotent. If the lease expires, Commander fails the current
+Experiment, leaves the accepted code unchanged, and pauses the Research Run.
+Trackio retains the failed Experiment's local telemetry for later diagnosis.
+
+A later self-hosted `server_url` client does not automatically upload those
+pending rows. That is no longer a correctness requirement: the failed Experiment
+is never resumed or accepted, and Commander can collect its locally queryable
+logs after reconnection. Any retry is a new Experiment with a new identity.
 
 Stable identity is workable only if the Experiment Ledger owns the Battleground
 Experiment ID and stores the generated Trackio `run_id`; `trackio.init()` does
@@ -45,6 +49,8 @@ resolution finds binary wheels for Windows x86_64, macOS x86_64/arm64, and Linux
 x86_64/arm64; native Windows and Linux runtime smoke tests remain an implementation
 prerequisite rather than a decision blocker for this prototype.
 
-The candidate decision is therefore: keep a Battleground-owned append-only
-spool and acknowledgement cursor for V1. Treat Trackio as an optional exporter
-or derived view, not the required telemetry substrate or lifecycle authority.
+The candidate decision is therefore: Trackio 0.31.5 can be the V1 telemetry
+substrate behind a narrow adapter, provided Battleground remains authoritative
+for Experiment identity, Control Leases, failure, Git lineage, Objective Metric
+validation, and keep/discard decisions. Pin Trackio's version, persist its generated
+`run_id` in the Experiment Ledger, and query through supported CLI/HTTP surfaces.
