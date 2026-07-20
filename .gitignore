@@ -1,0 +1,10 @@
+# Local agent and skill configuration
+.agents/
+agents/
+.skills/
+skills/
+skills-lock.json
+skills.lock.json
+
+# macOS metadata
+.DS_Store
