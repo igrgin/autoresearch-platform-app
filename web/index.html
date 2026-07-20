@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commander sidecar prototype</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">PROTOTYPE — throw away after the decision</p>
+      <h1>Commander supervision</h1>
+      <p>Drive the process boundary, then inspect every observed state transition.</p>
+
+      <nav aria-label="Prototype actions">
+        <button data-action="start">Start Commander</button>
+        <button data-action="ping">Ping</button>
+        <button data-action="stream">Stream 5 events</button>
+        <button data-action="shutdown">Graceful shutdown</button>
+        <button data-action="crash">Simulate crash</button>
+        <button data-action="kill">Force kill</button>
+      </nav>
+
+      <pre id="state" aria-live="polite"></pre>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

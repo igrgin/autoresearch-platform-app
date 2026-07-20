@@ -8,3 +8,16 @@ skills.lock.json
 
 # macOS metadata
 .DS_Store
+
+# PROTOTYPE — generated dependencies, sidecar binaries, and build output
+/node_modules/
+/.prototype-venv/
+/.prototype-build/
+/.prototype-dist/
+/.prototype-secrets/
+__pycache__/
+*.pyc
+/src-tauri/binaries/*
+!/src-tauri/binaries/.gitkeep
+/src-tauri/gen/schemas/
+/src-tauri/target/

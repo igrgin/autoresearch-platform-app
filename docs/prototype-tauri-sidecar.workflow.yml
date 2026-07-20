@@ -1,0 +1,66 @@
+name: Prototype Tauri Commander sidecar
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/prototype-tauri-commander-sidecar
+
+jobs:
+  package:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS package
+            runner: macos-14
+            bundles: app,dmg
+            artifact_path: |
+              src-tauri/target/release/bundle/macos/*
+              src-tauri/target/release/bundle/dmg/*
+          - name: Windows package
+            runner: windows-2022
+            bundles: nsis
+            artifact_path: src-tauri/target/release/bundle/nsis/*
+          - name: Linux package
+            runner: ubuntu-22.04
+            bundles: appimage,deb
+            artifact_path: |
+              src-tauri/target/release/bundle/appimage/*
+              src-tauri/target/release/bundle/deb/*
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: npm ci
+
+      - name: Freeze and verify Commander protocol
+        run: npm run prototype:verify-protocol
+
+      - name: Package with a disposable updater signature
+        run: node scripts/package-signed.mjs --bundles "${{ matrix.bundles }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-prototype-packages
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error

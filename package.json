@@ -1,0 +1,19 @@
+{
+  "name": "battleground-tauri-commander-prototype",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "prototype:sidecar": "node scripts/build-sidecar.mjs",
+    "prototype:verify-protocol": "npm run prototype:sidecar && node scripts/protocol-harness.mjs",
+    "prototype": "npm run prototype:sidecar && tauri dev",
+    "prototype:package": "npm run prototype:verify-protocol && node scripts/package-signed.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2"
+  }
+}
