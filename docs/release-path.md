@@ -12,7 +12,9 @@ This is the release boundary proved or deliberately left credential-gated by the
 
 ## Cross-platform verification
 
-`.github/workflows/prototype-tauri-sidecar.yml` contains the host-native macOS, Windows, and Linux matrix. This ticket cannot claim three-platform reliability until all three jobs pass.
+The host-native macOS, Windows, and Linux jobs all passed in [CI run 29789224518](https://github.com/igrgin/autoresearch-platform-app/actions/runs/29789224518). Each job froze Commander, verified the 9-frame ordered protocol and graceful exit, built the native Tauri packages, created updater payload signatures with a disposable per-job prototype key, and uploaded the resulting artifacts.
+
+This proves that the same supervision boundary and packaging approach builds on all three host platforms. It does not substitute for hands-on lifecycle testing on Windows and Linux or production identity credentials.
 
 ## Production release credentials
 

@@ -42,7 +42,7 @@ The active `.github/workflows/prototype-tauri-sidecar.yml` workflow packages and
 ## Deliberate limits
 
 - The Commander executable is a tiny PyInstaller-frozen protocol fixture, not application code.
-- The macOS updater artifact is signed with a disposable prototype key. The Windows/Linux workflow is the remaining verification gate. Production identity signing/notarization still requires Apple and Windows credentials; production updater signing requires one offline Tauri key shared by all release jobs.
+- The [cross-platform CI run](https://github.com/igrgin/autoresearch-platform-app/actions/runs/29789224518) passed on macOS, Windows, and Linux: each job verified the frozen Commander protocol, built native packages, created signed updater artifacts with disposable prototype keys, and uploaded them. Production identity signing/notarization still requires Apple and Windows credentials; production updater signing requires one offline Tauri key shared by all release jobs.
 - The prototype tests child supervision while Battleground is open. Whether a Research Run may outlive Battleground is a separate product decision.
 - No persistence, retry/replay, provider, SSH, Git, or Experiment behavior is implemented here.
 
