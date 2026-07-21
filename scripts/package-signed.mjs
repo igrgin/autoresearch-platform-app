@@ -8,8 +8,7 @@ import {
 import { join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const windows = process.platform === "win32";
-const tauri = join(root, "node_modules", ".bin", windows ? "tauri.cmd" : "tauri");
+const tauri = join(root, "node_modules", "@tauri-apps", "cli", "tauri.js");
 const secrets = join(root, ".prototype-secrets");
 const privateKey = join(secrets, "updater.key");
 const publicKey = `${privateKey}.pub`;
@@ -20,7 +19,8 @@ function run(command, args, options = {}) {
 
 mkdirSync(secrets, { recursive: true });
 if (!existsSync(privateKey) || !existsSync(publicKey)) {
-  run(tauri, [
+  run(process.execPath, [
+    tauri,
     "signer",
     "generate",
     "--write-keys",
@@ -39,14 +39,18 @@ const configOverride = JSON.stringify({
   },
 });
 
-run(tauri, ["build", "--config", configOverride, ...process.argv.slice(2)], {
-  env: {
-    ...process.env,
-    TAURI_SIGNING_PRIVATE_KEY: privateKey,
-    TAURI_SIGNING_PRIVATE_KEY_PATH: privateKey,
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: "prototype",
+run(
+  process.execPath,
+  [tauri, "build", "--config", configOverride, ...process.argv.slice(2)],
+  {
+    env: {
+      ...process.env,
+      TAURI_SIGNING_PRIVATE_KEY: privateKey,
+      TAURI_SIGNING_PRIVATE_KEY_PATH: privateKey,
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: "prototype",
+    },
   },
-});
+);
 
 function findSignatures(directory) {
   if (!existsSync(directory)) return [];
